@@ -18,6 +18,7 @@ use App\Http\Controllers\authentications\RegisterBasic;
 use App\Http\Controllers\authentications\ForgotPasswordBasic;
 use App\Http\Controllers\cards\CardBasic;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\user_interface\Accordion;
 use App\Http\Controllers\user_interface\Alerts;
 use App\Http\Controllers\user_interface\Badges;
@@ -151,19 +152,29 @@ Route::get('/', [WelcomeController::class,  'index'])->name('welcome.view');
 // Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticationController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthenticationController::class, 'login']);
+    // auth activate here
+    // Route::post('/login', [AuthenticationController::class, 'login']);
+
+    Route::post('/login', function () {
+        return redirect()->route('dashboard');
+    });
+
 
     Route::get('/register', [AuthenticationController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthenticationController::class, 'register']);
 });
 
+// auth activate here
 // Auth routes
-Route::middleware('auth')->group(function () {
-    Route::post('/logout', [AuthenticationController::class, 'logout'])->name('logout');
-    Route::get('/dashboard', function () {
-        return view('dashboard'); // buat view dashboard sendiri
-    })->name('dashboard');
-});
+// Route::middleware('auth')->group(function () {
+//     Route::post('/logout', [AuthenticationController::class, 'logout'])->name('logout');
+//     Route::get('/dashboard', function () {
+//         return view('dashboard'); // buat view dashboard sendiri
+//     })->name('dashboard');
+// });
+
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 // course view 
 Route::get('/courses-view', [CourseController::class, 'view'])->name('courses.view');
