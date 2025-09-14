@@ -22,6 +22,7 @@
 
   <!-- Include Scripts for customizer, helper, analytics, config -->
   @include('layouts/sections/scriptsIncludes')
+  
 </head>
 
 <body>
@@ -33,8 +34,20 @@
   
 
   <!-- Include Scripts -->
-  @include('layouts/sections/scripts')
+  
+  <!-- ✅ Tambahin jQuery dulu -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
+  <!-- ✅ DataTables -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  
+  <!-- ✅ SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  
+  @yield('page-script2')
+  @include('layouts/sections/scripts')
 </body>
 
 </html>

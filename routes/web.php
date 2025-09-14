@@ -177,4 +177,4 @@ Route::middleware('guest')->group(function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 // course view 
-Route::get('/courses-view', [CourseController::class, 'view'])->name('courses.view');
+Route::get('/courses-view', [CourseController::class, 'view'])->name('courses-view');

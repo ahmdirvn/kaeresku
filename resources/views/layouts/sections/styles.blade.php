@@ -8,9 +8,10 @@
 
 <!-- Core CSS -->
 @vite([
+  'resources/assets/css/custom.css',
   'resources/assets/vendor/scss/core.scss',
   'resources/assets/vendor/scss/theme-default.scss',
-  'resources/assets/css/demo.css'
+  'resources/assets/css/demo.css',
 ])
 
 <!-- Vendor Styles -->

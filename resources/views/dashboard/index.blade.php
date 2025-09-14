@@ -2,12 +2,21 @@
 
 @section('title', 'Dashboard - Analytics')
 
+{{-- Vendor styles --}}
 @section('vendor-style')
-@vite('resources/assets/vendor/libs/apex-charts/apex-charts.scss')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 @endsection
 
+{{-- Vendor scripts --}}
 @section('vendor-script')
-@vite('resources/assets/vendor/libs/apex-charts/apexcharts.js')
+{{-- jQuery sudah otomatis dari Sneat (jangan double include) --}}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+console.log("jQuery version (Sneat):", typeof jQuery !== "undefined" ? jQuery.fn.jquery : "NOT LOADED");
+</script>
+
 @endsection
 
 @section('page-script')
