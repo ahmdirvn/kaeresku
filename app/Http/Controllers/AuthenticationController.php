@@ -5,10 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Services\FirebaseService;
 use Illuminate\Support\Facades\Hash;
+use Kreait\Laravel\Firebase\Facades\Firebase;
 
 class AuthenticationController extends Controller
 {
+    protected $auth;
+
+    public function __construct()
+    {
+        $this->auth = Firebase::auth();
+    }
+
     // Show login form
     public function showLogin()
     {
@@ -40,23 +49,47 @@ class AuthenticationController extends Controller
     }
 
     // Handle register
+    // Handle register
     public function register(Request $request)
     {
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', 'min:6'],
+            'terms' => ['accepted'], // biar checkbox terms wajib
         ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
+        try {
+            $userProperties = [
+                'email' => $validated['email'],
+                'emailVerified' => false,
+                'password' => $validated['password'],
+                'displayName' => $validated['name'],
+                'disabled' => false,
+            ];
 
-        Auth::login($user);
 
-        return redirect('/dashboard'); // ganti sesuai route dashboard
+            try {
+                $createdUser = $this->auth->createUser($userProperties);
+                dd($createdUser);
+            } catch (\Throwable $e) {
+                dd('Error Firebase:', $e->getMessage());
+            }
+
+            // bisa langsung login kalau mau
+            $request->session()->put('firebase_user', [
+                'uid' => $createdUser->uid,
+                'email' => $createdUser->email,
+                'name' => $validated['name'],
+            ]);
+
+            dd($request);
+
+            return redirect()->route('dashboard')->with('success', 'Registrasi berhasil!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     // Logout

@@ -70,3 +70,51 @@
     </div>
 </div>
 @endsection
+
+<script type="module">
+  // Import SDK
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+  // Firebase Config
+  const firebaseConfig = {
+    apiKey: "{{ config('services.firebase.api_key') }}",
+    authDomain: "{{ config('services.firebase.auth_domain') }}",
+    projectId: "{{ config('services.firebase.project_id') }}",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    let email = document.getElementById('email').value;
+    let password = document.getElementById('password').value;
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
+
+      // Kirim token ke Laravel
+      fetch('/firebase-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ token })
+      }).then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            window.location.href = "/dashboard";
+          } else {
+            alert("Login gagal");
+          }
+        });
+
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+</script>

@@ -160,8 +160,8 @@ Route::middleware('guest')->group(function () {
     });
 
 
-    Route::get('/register', [AuthenticationController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthenticationController::class, 'register']);
+    Route::get('/register', [AuthenticationController::class, 'showRegister']);
+    Route::post('/register', [AuthenticationController::class, 'register'])->name('register');
 });
 
 // auth activate here
