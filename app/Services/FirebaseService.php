@@ -13,13 +13,13 @@ class FirebaseService
     {
 
         $serviceAccountPath = realpath(base_path(env('FIREBASE_CREDENTIALS')));
-        $serviceAccountPath = storage_path('app/firebase/kaeresku-firebase.json');
         $databaseUri = env('FIREBASE_DATABASE_URL');
-
 
         $factory = (new Factory)
             ->withServiceAccount($serviceAccountPath)
-            ->withDatabaseUri(env('FIREBASE_DATABASE_URL'));
+            ->withDatabaseUri($databaseUri)
+            ->withProjectId(json_decode(file_get_contents($serviceAccountPath), true)['project_id']);
+
 
         $this->auth = $factory->createAuth();
     }

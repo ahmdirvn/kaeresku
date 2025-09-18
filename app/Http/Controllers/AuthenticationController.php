@@ -6,16 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Services\FirebaseService;
-use Illuminate\Support\Facades\Hash;
-use Kreait\Laravel\Firebase\Facades\Firebase;
+use Kreait\Firebase\Contract\Auth as FirebaseAuth;
 
 class AuthenticationController extends Controller
 {
-    protected $auth;
+    protected $firebaseAuth;
 
-    public function __construct()
+    public function __construct(FirebaseAuth $firebaseAuth)
+
     {
-        $this->auth = Firebase::auth();
+
+        $this->firebaseAuth = $firebaseAuth;
     }
 
     // Show login form
@@ -69,13 +70,16 @@ class AuthenticationController extends Controller
                 'disabled' => false,
             ];
 
+            $email = $validated['email'];
+            $password = $validated['password'];
 
-            try {
-                $createdUser = $this->auth->createUser($userProperties);
-                dd($createdUser);
-            } catch (\Throwable $e) {
-                dd('Error Firebase:', $e->getMessage());
-            }
+            // try {
+            //     $createdUser = $this->firebaseAuth->createUserWithEmailAndPassword($email, $password);
+            // } catch (\Throwable $e) {
+            //     dd('Error Firebase:', $e->getMessage());
+            // }
+
+            $createdUser = $this->firebaseAuth->createUserWithEmailAndPassword($email, $password);
 
             // bisa langsung login kalau mau
             $request->session()->put('firebase_user', [
@@ -83,8 +87,6 @@ class AuthenticationController extends Controller
                 'email' => $createdUser->email,
                 'name' => $validated['name'],
             ]);
-
-            dd($request);
 
             return redirect()->route('dashboard')->with('success', 'Registrasi berhasil!');
         } catch (\Exception $e) {
