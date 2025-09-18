@@ -30,10 +30,20 @@ console.log("jQuery version (Sneat):", typeof jQuery !== "undefined" ? jQuery.fn
       <div class="d-flex align-items-start row">
         <div class="col-sm-7">
           <div class="card-body">
-            <h5 class="card-title text-primary mb-3">Congratulations John! 🎉</h5>
-            <p class="mb-6">You have done 72% more sales today.<br>Check your new badge in your profile.</p>
+              @if(session('success'))
+              <div class="alert alert-success d-flex align-items-center" role="alert">
+                  <span class="badge bg-success me-2">Berhasil</span>
+                  <div>{{ session('success') }}</div>
+              </div>
+              @endif
 
-            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Badges</a>
+              
+              @if($errors->has('error'))
+              <div class="alert alert-danger d-flex align-items-center" role="alert">
+                  <span class="badge bg-danger me-2">Error</span>
+                  <div>{{ $errors->first('error') }}</div>
+              </div>
+              @endif
           </div>
         </div>
         <div class="col-sm-5 text-center text-sm-left">

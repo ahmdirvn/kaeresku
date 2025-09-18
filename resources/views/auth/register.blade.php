@@ -28,6 +28,13 @@
                     <h4 class="mb-1">Plan your study easily with Kaeres 📚</h4>
                     <p class="mb-6">Create your Kartu Rencana Studi and manage your academic schedule effortlessly.</p>
 
+                    @if($errors->has('error'))
+                    <div class="alert alert-danger d-flex align-items-center" role="alert">
+                        <span class="badge bg-danger me-2">Error</span>
+                        <div>{{ $errors->first('error') }}</div>
+                    </div>
+                    @endif
+
                     {{-- ✅ Register Form --}}
                     <form id="formAuthentication" class="mb-6" action="{{ route('register') }}" method="POST">
                         @csrf

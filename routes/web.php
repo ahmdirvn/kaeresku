@@ -47,6 +47,7 @@ use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\WelcomeController;
+use GPBMetadata\Google\Api\Auth;
 use Kreait\Firebase\Factory;
 
 
@@ -153,25 +154,16 @@ Route::get('/', [WelcomeController::class,  'index'])->name('welcome.view');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticationController::class, 'showLogin'])->name('login');
     // auth activate here
-    // Route::post('/login', [AuthenticationController::class, 'login']);
+    Route::post('/login', [AuthenticationController::class, 'login']);
 
-    Route::post('/login', function () {
-        return redirect()->route('dashboard');
-    });
-
-
+    // Route::post('/login', function () {
+    //     return redirect()->route('dashboard');
+    // });
     Route::get('/register', [AuthenticationController::class, 'showRegister']);
     Route::post('/register', [AuthenticationController::class, 'register'])->name('register');
 });
 
-// auth activate here
-// Auth routes
-// Route::middleware('auth')->group(function () {
-//     Route::post('/logout', [AuthenticationController::class, 'logout'])->name('logout');
-//     Route::get('/dashboard', function () {
-//         return view('dashboard'); // buat view dashboard sendiri
-//     })->name('dashboard');
-// });
+Route::get('/logout', [AuthenticationController::class, 'logout']);
 
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

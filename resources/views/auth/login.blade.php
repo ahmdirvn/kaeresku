@@ -22,6 +22,13 @@
                             <span class="app-brand-text demo text-heading fw-bold">Kaeres</span>
                         </a>
                     </div>
+                    
+                    @if(session('success'))
+                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                        <span class="badge bg-success me-2">Berhasil</span>
+                        <div>{{ session('success') }}</div>
+                    </div>
+                    @endif
                     <!-- /Logo -->
                     <h4 class="mb-1">Welcome to Kaeres! 👋</h4>
                     <p class="mb-6">Sign in to manage your Kartu Rencana Studi (KRS) and schedule your courses easily.</p>

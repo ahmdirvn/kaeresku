@@ -22,26 +22,43 @@ class AuthenticationController extends Controller
     // Show login form
     public function showLogin()
     {
+        if (session()->has('firebase_token')) {
+            return redirect()->route('dashboard');
+        }
         return view('auth.login');
     }
 
     // Handle login
     public function login(Request $request)
     {
+        // kalau sudah ada session token → redirect ke dashboard
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required']
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect()->intended('/dashboard'); // ganti sesuai route dashboard
+        $email = $credentials['email'];
+        $password = $credentials['password'];
+
+        try {
+            $signInResult = $this->firebaseAuth->signInWithEmailAndPassword($email, $password);
+            $message = 'Successfully signed in!';
+            $token  = $signInResult->data()['idToken'];
+
+            // simpan token di session
+            session(['firebase_token' => $token]);
+
+            return redirect()->route('dashboard')->with('success', $message);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
 
         return back()->withErrors([
             'email' => 'Email atau password salah!',
         ]);
     }
+
 
     // Show register form
     public function showRegister()
@@ -73,22 +90,16 @@ class AuthenticationController extends Controller
             $email = $validated['email'];
             $password = $validated['password'];
 
-            // try {
-            //     $createdUser = $this->firebaseAuth->createUserWithEmailAndPassword($email, $password);
-            // } catch (\Throwable $e) {
-            //     dd('Error Firebase:', $e->getMessage());
-            // }
 
             $createdUser = $this->firebaseAuth->createUserWithEmailAndPassword($email, $password);
 
-            // bisa langsung login kalau mau
             $request->session()->put('firebase_user', [
                 'uid' => $createdUser->uid,
                 'email' => $createdUser->email,
                 'name' => $validated['name'],
             ]);
 
-            return redirect()->route('dashboard')->with('success', 'Registrasi berhasil!');
+            return redirect()->route('login')->with('success', 'Registrasi berhasil!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
@@ -97,10 +108,13 @@ class AuthenticationController extends Controller
     // Logout
     public function logout(Request $request)
     {
-        Auth::logout();
+        // hapus token firebase
+        $request->session()->forget('firebase_token');
+
+        // invalidate & regenerate biar session fresh
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/'); // kembali ke landing page
+        return redirect('/')->with('success', 'Berhasil logout!');
     }
 }
