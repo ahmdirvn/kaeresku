@@ -170,3 +170,11 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 
 // course view 
 Route::get('/courses-view', [CourseController::class, 'view'])->name('courses-view');
+
+Route::get('courses', [CourseController::class, 'view']);
+Route::prefix('api/courses')->group(function () {
+    Route::get('/', [CourseController::class, 'index']);
+    Route::post('/', [CourseController::class, 'store']);
+    Route::put('/{id}', [CourseController::class, 'update']);
+    Route::delete('/{id}', [CourseController::class, 'destroy']);
+});

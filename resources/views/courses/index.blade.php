@@ -116,7 +116,14 @@ $(document).ready(function () {
         $.ajax({
             url: '/api/courses',
             type: 'POST',
+            credentials: 'include',
             data: formData,
+            xhrFields: {
+                withCredentials: true 
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function () {
                 Swal.fire('Berhasil!', 'Mata kuliah berhasil ditambahkan.', 'success');
                 $('#addCourseForm')[0].reset();

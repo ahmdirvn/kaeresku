@@ -55,6 +55,8 @@ class AuthenticationController extends Controller
                 'firebase_refresh_token' => $refreshToken,
             ]);
 
+            session()->save(); //save the session
+
             return redirect()->route('dashboard')->with('success', $message);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

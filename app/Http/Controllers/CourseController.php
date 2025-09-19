@@ -20,7 +20,7 @@ class CourseController extends Controller
         $this->firebaseAuth = $firebaseAuth;
 
         try {
-            $token = session('firebase_token');
+            $token = session('firebase_token'); //ini di dd ada
             if (!$token) {
                 throw new \Exception('Token tidak ditemukan');
             }
@@ -33,7 +33,7 @@ class CourseController extends Controller
 
     protected function getUid()
     {
-        return $this->uid; //ini gakada
+        return $this->uid;
     }
 
 
@@ -46,11 +46,10 @@ class CourseController extends Controller
     //  CREATE
     public function store(Request $request)
     {
-        $idToken = $request->bearerToken();
-        $verifiedIdToken = $this->firebaseAuth->verifyIdToken($idToken);
+        $token = session('firebase_token');
+        $verifiedIdToken = $this->firebaseAuth->verifyIdToken($token);
         $uid = $verifiedIdToken->claims()->get('sub');
 
-        dd($uid);
         $uid = $this->getUid();
 
         $newCourse = $this->database
