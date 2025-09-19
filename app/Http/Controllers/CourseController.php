@@ -4,16 +4,38 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Kreait\Laravel\Firebase\Facades\Firebase;
+use Kreait\Firebase\Contract\Auth as FirebaseAuth;
 
 class CourseController extends Controller
 {
     protected $database;
     protected $table = 'courses';
+    public $uid;
 
-    public function __construct()
+    protected $firebaseAuth;
+
+    public function __construct(FirebaseAuth $firebaseAuth)
     {
-        $this->database = Firebase::database();
+        $this->database = \Kreait\Laravel\Firebase\Facades\Firebase::database();
+        $this->firebaseAuth = $firebaseAuth;
+
+        try {
+            $token = session('firebase_token');
+            if (!$token) {
+                throw new \Exception('Token tidak ditemukan');
+            }
+            $verifiedIdToken = $firebaseAuth->verifyIdToken($token);
+            $this->uid = $verifiedIdToken->claims()->get('sub'); // UID Firebase
+        } catch (\Throwable $e) {
+            $this->uid = null;
+        }
     }
+
+    protected function getUid()
+    {
+        return $this->uid; //ini gakada
+    }
+
 
     public function view()
     {
@@ -24,6 +46,13 @@ class CourseController extends Controller
     //  CREATE
     public function store(Request $request)
     {
+        $idToken = $request->bearerToken();
+        $verifiedIdToken = $this->firebaseAuth->verifyIdToken($idToken);
+        $uid = $verifiedIdToken->claims()->get('sub');
+
+        dd($uid);
+        $uid = $this->getUid();
+
         $newCourse = $this->database
             ->getReference($this->table)
             ->push([
@@ -32,6 +61,7 @@ class CourseController extends Controller
                 'sks'         => $request->sks,
                 'description' => $request->description ?? '',
                 'category'    => $request->category ?? '',
+                'user_id'     => $uid, // simpan id user
             ]);
 
         return response()->json([

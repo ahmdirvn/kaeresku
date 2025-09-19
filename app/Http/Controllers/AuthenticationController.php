@@ -44,10 +44,16 @@ class AuthenticationController extends Controller
         try {
             $signInResult = $this->firebaseAuth->signInWithEmailAndPassword($email, $password);
             $message = 'Successfully signed in!';
-            $token  = $signInResult->data()['idToken'];
+            // $token  = $signInResult->data()['idToken'];
 
-            // simpan token di session
-            session(['firebase_token' => $token]);
+            $idToken = $signInResult->idToken();              // token untuk validasi
+            $refreshToken = $signInResult->refreshToken();    // simpan untuk refresh nanti
+
+            // simpan di session
+            session([
+                'firebase_token' => $idToken,
+                'firebase_refresh_token' => $refreshToken,
+            ]);
 
             return redirect()->route('dashboard')->with('success', $message);
         } catch (\Exception $e) {
@@ -55,7 +61,7 @@ class AuthenticationController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Email atau password salah!',
+            'error' => 'Email atau password salah!',
         ]);
     }
 
@@ -99,7 +105,7 @@ class AuthenticationController extends Controller
                 'name' => $validated['name'],
             ]);
 
-            return redirect()->route('login')->with('success', 'Registrasi berhasil!');
+            return redirect()->route('login')->with('success', 'Registrasi berhasil! . Silahkan Login menggunakan identitas terdaftar!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
