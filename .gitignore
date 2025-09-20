@@ -27,3 +27,5 @@ yarn-error.log
 !/public/assets/*
 /public/css
 /public/js
+
+storagae/kaeresku-firebase.json
