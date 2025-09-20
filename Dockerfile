@@ -1,45 +1,66 @@
-# Tahap 1: Builder
-FROM php:8.2-cli as builder
-
-# Install dependency sistem
-RUN apt-get update && apt-get install -y \
-    unzip git curl libpng-dev libonig-dev libxml2-dev zip libzip-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
-
-# Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Set workdir
-WORKDIR /app
-
-# Copy file composer & install dependencies
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader
-
-# Copy semua source code
-COPY . .
-
-# Build cache config, route, dan view
-RUN php artisan config:cache \
- && php artisan route:cache \
- && php artisan view:cache
-
-
-# Tahap 2: Runtime
-FROM php:8.2-cli
-
-# Install dependency sistem
-RUN apt-get update && apt-get install -y \
-    unzip git curl libpng-dev libonig-dev libxml2-dev zip libzip-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
+# =========================
+# Stage 1: Build frontend (Vite)
+# =========================
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
-# Copy hasil build dari tahap builder
-COPY --from=builder /app /app
+# Copy dependency files dari src/
+COPY src/package*.json ./
+COPY src/vite.config.* ./
 
-# Expose port default Laravel
-EXPOSE 8000
+# Install dependencies
+RUN npm install --legacy-peer-deps
 
-# Start Laravel
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Copy seluruh source frontend
+COPY src/ ./
+
+# Build Vite
+RUN npm run build
+
+
+# =========================
+# Stage 2: PHP + Nginx + Laravel
+# =========================
+FROM php:8.2-fpm-alpine
+
+RUN apk add --no-cache \
+    nginx \
+    bash \
+    wget \
+    git \
+    zip unzip \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    freetype-dev \
+    libzip-dev \
+    oniguruma-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install gd pdo_mysql zip exif
+
+RUN mkdir -p /run/nginx /app /app/public
+
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/startup.sh /startup.sh
+RUN chmod +x /startup.sh
+
+WORKDIR /app
+
+# Copy seluruh Laravel project
+COPY src/ /app
+
+# Copy hasil build frontend ke public/build
+COPY --from=build /app/public/build /app/public/build
+
+# Install composer
+RUN wget https://getcomposer.org/composer.phar \
+    && chmod +x composer.phar \
+    && mv composer.phar /usr/local/bin/composer
+
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+
+RUN chown -R www-data:www-data /app \
+    && chmod -R 755 /app/storage /app/bootstrap/cache
+
+EXPOSE 8080
+CMD ["/startup.sh"]

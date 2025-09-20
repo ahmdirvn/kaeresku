@@ -1,0 +1,33 @@
+steps:
+  # 1️⃣ Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t', 'asia-southeast2-docker.pkg.dev/forward-garden-421413/kaeresku/kaeresku:$SHORT_SHA',
+        '.'
+      ]
+
+  # 2️⃣ Push Docker image ke Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'asia-southeast2-docker.pkg.dev/forward-garden-421413/kaeresku/kaeresku:$SHORT_SHA'
+      ]
+
+  # 3️⃣ Deploy ke Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run', 'deploy', 'kaeresku',
+        '--image', 'asia-southeast2-docker.pkg.dev/forward-garden-421413/kaeresku/kaeresku:$SHORT_SHA',
+        '--region', 'asia-southeast2',
+        '--platform', 'managed',
+        '--allow-unauthenticated',
+        '--set-secrets', 'FIREBASE_CREDENTIALS=firebase-credentials:latest'
+      ]
+
+images:
+  - 'asia-southeast2-docker.pkg.dev/forward-garden-421413/kaeresku/kaeresku:$SHORT_SHA'
