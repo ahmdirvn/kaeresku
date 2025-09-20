@@ -3,7 +3,7 @@ name: Deploy to Cloud Run
 env:
   SERVICE_NAME: kaeresku
   PROJECT_ID: forward-garden-421413
-  DOCKER_IMAGE_URL: asia-southeast2-docker.pkg.dev/forward-garden-421413/kaeresku/kaeresku:105
+  DOCKER_IMAGE_URL: asia-southeast2-docker.pkg.dev/forward-garden-421413/kaeresku/kaeresku:1.0.5
   REGION: asia-southeast2
 
 on:
