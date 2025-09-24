@@ -9,7 +9,11 @@ use App\Services\FirebaseService;
 use Kreait\Firebase\Contract\Auth as FirebaseAuth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VerifyEmail;
+use Kreait\Firebase\Auth\SignIn\FailedToSignIn;
 use Kreait\Laravel\Firebase\Facades\Firebase;
+use Kreait\Firebase\Exception\Auth\AuthError;
+use Kreait\Firebase\Exception\Auth\InvalidPassword;
+use Kreait\Firebase\Exception\Auth\UserNotFound;
 
 class AuthenticationController extends Controller
 {
@@ -37,6 +41,7 @@ class AuthenticationController extends Controller
     // Handle login
     public function login(Request $request)
     {
+
         // kalau sudah ada session token → redirect ke dashboard
 
         $credentials = $request->validate([
@@ -46,6 +51,16 @@ class AuthenticationController extends Controller
 
         $email = $credentials['email'];
         $password = $credentials['password'];
+
+
+        // cek apakah user ada di Firebase Auth
+
+        try {
+            $this->firebaseAuth->getUserByEmail($email);
+        } catch (UserNotFound $e) {
+            return back()->withErrors(['error' => 'User tidak ditemukan.']);
+        }
+
 
         try {
             $signInResult = $this->firebaseAuth->signInWithEmailAndPassword($email, $password);
@@ -76,10 +91,26 @@ class AuthenticationController extends Controller
             session()->save(); //save the session
 
             return redirect()->route('dashboard')->with('success', $message);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        } catch (FailedToSignIn $e) {
 
+            $errorMessage = $e->getMessage();
+
+            if (str_contains($errorMessage, 'INVALID_LOGIN_CREDENTIALS')) {
+                return back()->withErrors(['error' => 'Password salah silakan coba lagi.']);
+            }
+
+            if (str_contains($errorMessage, 'EMAIL_NOT_FOUND')) {
+                return back()->withErrors(['error' => 'Email tidak ditemukan.']);
+            }
+
+            if (str_contains($errorMessage, 'INVALID_EMAIL')) {
+                return back()->withErrors(['error' => 'Format email tidak valid.']);
+            }
+
+            return back()->withErrors(['error' => 'Login gagal: ' . $errorMessage]);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
         return back()->withErrors([
             'error' => 'Email atau password salah!',
         ]);
