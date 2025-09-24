@@ -7,16 +7,22 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Services\FirebaseService;
 use Kreait\Firebase\Contract\Auth as FirebaseAuth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\VerifyEmail;
+use Kreait\Laravel\Firebase\Facades\Firebase;
 
 class AuthenticationController extends Controller
 {
     protected $firebaseAuth;
+    protected $database;
+
 
     public function __construct(FirebaseAuth $firebaseAuth)
 
     {
 
         $this->firebaseAuth = $firebaseAuth;
+        $this->database = Firebase::database();
     }
 
     // Show login form
@@ -99,7 +105,36 @@ class AuthenticationController extends Controller
             $password = $validated['password'];
 
 
-            $createdUser = $this->firebaseAuth->createUserWithEmailAndPassword($email, $password);
+            // $createdUser = $this->firebaseAuth->createUserWithEmailAndPassword($email, $password);
+
+            $createdUser = $this->firebaseAuth->createUser([
+                'email' => $email,
+                'password' => $password,
+            ]);
+
+            // // getting link untuk smpt
+            // $verificationLink = $this->firebaseAuth->getEmailVerificationLink($request->email);
+
+            $actionCodeSettings = [
+                'continueUrl' => "https://kaeresku-738039218648.asia-southeast2.run.app/verify?email=" . urlencode($email),
+                'handleCodeInApp' => false,
+            ];
+
+            $this->firebaseAuth->sendEmailVerificationLink($email, $actionCodeSettings);
+
+            // 3. Simpan ke Realtime Database (status awal belum verifikasi)
+            // $userData = [
+            //     'email' => $email,
+            //     'is_verified' => false,
+            // ];
+            // $this->database
+            //     ->getReference('users/' . md5($email))
+            //     ->set($userData);
+
+            // ini kalau mau pakai smtp
+            // Generate verification link dari Firebase
+
+            // Mail::to($email)->send(new VerifyEmail($verificationLink));
 
             $request->session()->put('firebase_user', [
                 'uid' => $createdUser->uid,
@@ -107,7 +142,7 @@ class AuthenticationController extends Controller
                 'name' => $validated['name'],
             ]);
 
-            return redirect()->route('login')->with('success', 'Registrasi berhasil! . Silahkan Login menggunakan identitas terdaftar!');
+            return redirect()->route('login')->with('success', 'Registrasi berhasil! Silakan cek email untuk verifikasi!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
@@ -124,5 +159,44 @@ class AuthenticationController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/')->with('success', 'Berhasil logout!');
+    }
+
+    public function verifyEmail(Request $request)
+    {
+        $email = $request->query('email'); // ambil params ?email
+
+        if (!$email) {
+            return view('emails/verify', [
+                'status' => 'error',
+                'message' => 'Email tidak ditemukan.'
+            ]);
+        }
+
+        try {
+            // cek user di Firebase Auth
+            $user = $this->firebaseAuth->getUserByEmail($email);
+
+            if ($user->emailVerified) {
+                // update ke Realtime DB
+                $this->database
+                    ->getReference('users/' . md5($email) . '/is_verified')
+                    ->set(true);
+
+                return view('emails.verify', [
+                    'status' => 'success',
+                    'message' => 'Email berhasil diverifikasi! Silakan login.'
+                ]);
+            } else {
+                return view('emails.verify', [
+                    'status' => 'warning',
+                    'message' => 'Email belum diverifikasi. Silakan cek email Anda.'
+                ]);
+            }
+        } catch (\Throwable $e) {
+            return view('verify', [
+                'status' => 'error',
+                'message' => '❌ Terjadi kesalahan: ' . $e->getMessage()
+            ]);
+        }
     }
 }

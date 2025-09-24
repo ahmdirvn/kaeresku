@@ -49,9 +49,7 @@ use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\WelcomeController;
 use GPBMetadata\Google\Api\Auth;
 use Kreait\Firebase\Factory;
-
-
-
+use PharIo\Manifest\AuthorCollection;
 
 // Main Page template Route
 Route::get('/template', [Analytics::class, 'index'])->name('dashboard-analytics');
@@ -178,3 +176,7 @@ Route::prefix('api/courses')->group(function () {
     Route::put('/{id}', [CourseController::class, 'update']);
     Route::delete('/{id}', [CourseController::class, 'destroy']);
 });
+
+
+// verification 
+Route::get('/verify', [AuthenticationController::class, 'verifyEmail'])->name('verify.email');
