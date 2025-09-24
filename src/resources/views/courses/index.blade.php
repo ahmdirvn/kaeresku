@@ -150,6 +150,9 @@ $(document).ready(function () {
                 $.ajax({
                     url: '/api/courses/' + id,
                     type: 'DELETE',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
                     success: function () {
                         Swal.fire('Dihapus!', 'Mata kuliah berhasil dihapus.', 'success');
                         table.ajax.reload();
@@ -189,6 +192,7 @@ $(document).ready(function () {
                         sks: $('#editSks').val(),
                         category: $('#editCategory').val(),
                         description: $('#editDescription').val(),
+                        _token: $('meta[name="csrf-token"]').attr('content') 
                     },
                     success: function () {
                         Swal.fire('Berhasil!', 'Mata kuliah berhasil diupdate.', 'success');
