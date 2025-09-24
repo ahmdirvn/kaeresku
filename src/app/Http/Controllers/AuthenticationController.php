@@ -49,6 +49,18 @@ class AuthenticationController extends Controller
 
         try {
             $signInResult = $this->firebaseAuth->signInWithEmailAndPassword($email, $password);
+
+            // cek status verifikasi di Realtime Database
+            $userRef = $this->database->getReference('users/' . md5($email));
+            $userData = $userRef->getValue();
+
+
+            if (!$userData || empty($userData['is_verified']) || $userData['is_verified'] !== true) {
+                return back()->withErrors([
+                    'error' => 'Email belum diverifikasi. Silakan cek inbox/spam email Anda.'
+                ]);
+            }
+
             $message = 'Successfully signed in!';
             // $token  = $signInResult->data()['idToken'];
 
