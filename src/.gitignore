@@ -4,6 +4,7 @@
 /public/build
 /public/hot
 /vendor
+src/storage/app/firebase/
 
 # .env
 .env.backup
