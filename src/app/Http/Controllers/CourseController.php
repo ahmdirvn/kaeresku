@@ -39,8 +39,20 @@ class CourseController extends Controller
     // VIEW (tetap untuk tampilan)
     public function view()
     {
+        $uid = $this->getUid();
+
         $courses = $this->database->getReference($this->table)->getValue();
-        return view('courses.index', compact('courses'));
+
+        $result = [];
+        if ($courses) {
+            foreach ($courses as $id => $course) {
+                if (($course['user_id'] ?? null) === $uid) { // filter data user login
+                    $result[$id] = $course;
+                }
+            }
+        }
+
+        return view('courses.index', compact('result'));
     }
 
     // CREATE
