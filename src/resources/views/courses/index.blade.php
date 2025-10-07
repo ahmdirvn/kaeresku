@@ -4,57 +4,37 @@
 
 @section('content')
 <div class="container mt-4">
-  <h2 class="mb-4">Daftar Mata Kuliah</h2>
-
-  {{-- Form Tambah Mata Kuliah --}}
-  <form id="addCourseForm" class="mb-4">
-    @csrf
-    <div class="row g-2 mb-2">
-      <div class="col-md-3">
-        <input type="text" name="name" class="form-control" placeholder="Nama Mata Kuliah" required>
-      </div>
-      <div class="col-md-2">
-        <input type="text" name="code" class="form-control" placeholder="Kode" required>
-      </div>
-      <div class="col-md-2">
-        <input type="number" name="sks" class="form-control" placeholder="SKS" required>
-      </div>
-      <div class="col-md-3">
-        <input type="text" name="category" class="form-control" placeholder="Kategori (Opsional)">
-      </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">Tambah</button>
-      </div>
-    </div>
-    <div class="row g-2">
-      <div class="col-md-12">
-        <textarea name="description" class="form-control" placeholder="Deskripsi (Opsional)" rows="2"></textarea>
-      </div>
-    </div>
-  </form>
-
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Daftar Mata Kuliah</h2>
+    <button class="btn btn-primary" id="btnAddCourse">
+      <i class="bx bx-plus"></i> Tambah Mata Kuliah
+    </button>
+  </div>
   {{-- Tabel Daftar Mata Kuliah --}}
   <div class="card px-5 py-4">
     <h5 class="card-header px-5">Daftar Mata Kuliah</h5>
     <div class="table-responsive text-nowrap px-5">
         <table id="courseTable" class="table table-striped text-center">
             <thead>
-                <tr>
-                    <th class="text-center col-auto">No</th>
-                    <th class="text-center">Nama</th>
-                    <th class="text-center">Kode</th>
-                    <th class="text-center">SKS</th>
-                    <th class="text-center">Kategori</th>
-                    <th class="text-center">Deskripsi</th>
-                    <th class="text-center">Aksi</th>
-                </tr>
+              <tr>
+                <th class="text-center" style="width: 5%;">No</th>
+                <th class="text-center" style="width: 20%;">Nama</th>
+                <th class="text-center" style="width: 10%;">Kode</th>
+                <th class="text-center" style="width: 8%;">SKS</th>
+                <th class="text-center" style="width: 12%;">Kategori</th>
+                <th class="text-center" style="width: 25%;">Deskripsi</th>
+                <th class="text-center" style="width: 10%;">Aksi</th>
+              </tr>
             </thead>
             <tbody class="table-border-bottom-0"></tbody>
         </table>
     </div>
   </div>
 </div>
+{{-- Include Modal --}}
+@include('courses.modal')
 @endsection
+
 
 {{--  Page Script --}}
 @section('page-script2')
