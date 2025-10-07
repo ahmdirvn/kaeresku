@@ -45,6 +45,7 @@ use App\Http\Controllers\form_elements\BasicInput;
 use App\Http\Controllers\form_elements\InputGroups;
 use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
+use App\Http\Controllers\KrsController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\WelcomeController;
 use GPBMetadata\Google\Api\Auth;
@@ -175,6 +176,17 @@ Route::prefix('api/courses')->group(function () {
     Route::post('/', [CourseController::class, 'store']);
     Route::put('/{id}', [CourseController::class, 'update']);
     Route::delete('/{id}', [CourseController::class, 'destroy']);
+});
+
+// krs view 
+Route::get('/krs-view', [KrsController::class, 'view'])->name('krs-view');
+
+Route::get('krs', [krsController::class, 'view']);
+Route::prefix('api/krs')->group(function () {
+    Route::get('/', [krsController::class, 'index']);
+    Route::post('/', [krsController::class, 'store']);
+    Route::put('/{id}', [krsController::class, 'update']);
+    Route::delete('/{id}', [krsController::class, 'destroy']);
 });
 
 

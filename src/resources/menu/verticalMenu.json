@@ -5,10 +5,7 @@
       "name": "Dashboards",
       "icon": "menu-icon tf-icons bx bx-home-smile",
       "slug": "dashboard",
-      "badge": [
-        "danger",
-        "5"
-      ],
+      "badge": ["danger", "5"],
       "submenu": [
         {
           "url": "/dashboard",
@@ -27,16 +24,22 @@
       "slug": "courses-view"
     },
     {
-      "url": "tables/basic",
+      "url": "krs-view",
       "icon": "menu-icon tf-icons bx bx-file",
       "name": "KRS",
       "slug": "tables-basic"
     },
     {
-      "url": "tables/basic",
+      "url": "schedule-view",
       "icon": "menu-icon tf-icons bx bx-calendar",
       "name": "Schedule",
       "slug": "tables-basic2"
+    },
+    {
+      "url": "lecturer-view",
+      "icon": "menu-icon tf-icons bx bx-chalkboard",
+      "name": "Lecturer",
+      "slug": "lecturer-view"
     }
   ]
 }
