@@ -47,6 +47,7 @@ use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
 use App\Http\Controllers\KrsController;
 use App\Http\Controllers\LecturerController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\WelcomeController;
 use GPBMetadata\Google\Api\Auth;
@@ -200,6 +201,18 @@ Route::prefix('api/lecturer')->group(function () {
     Route::post('/', [LecturerController::class, 'store']);
     Route::put('/{id}', [LecturerController::class, 'update']);
     Route::delete('/{id}', [LecturerController::class, 'destroy']);
+});
+
+
+// lecturer view 
+Route::get('/schedule-view', [ScheduleController::class, 'view'])->name('schedule-view');
+
+Route::get('schedule', [ScheduleController::class, 'view']);
+Route::prefix('api/schedule')->group(function () {
+    Route::get('/', [ScheduleController::class, 'index']);
+    Route::post('/', [ScheduleController::class, 'store']);
+    Route::put('/{id}', [ScheduleController::class, 'update']);
+    Route::delete('/{id}', [ScheduleController::class, 'destroy']);
 });
 
 
