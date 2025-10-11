@@ -28,14 +28,12 @@
         </thead>
         <tbody class="table-border-bottom-0"></tbody>
       </table>
-
     </div>
   </div>
 </div>
 {{-- Include Modal --}}
 @include('courses.modal')
 @endsection
-
 
 {{--  Page Script --}}
 @section('page-script2')
@@ -44,11 +42,11 @@ $(document).ready(function () {
     let lecturerList = [];
     let table = $('#courseTable').DataTable({
         ajax: {
-        url: '/api/courses',
-        dataSrc: function (json) {
-            console.log('🔥 Response dari API /api/courses:', json);
-            return json.data; // pastikan tetap mengembalikan data ke DataTables
-        }
+            url: '/api/courses',
+            dataSrc: function (json) {
+                console.log('🔥 Response dari API /api/courses:', json);
+                return json.data;
+            }
         },
         columns: [
             { data: null, render: (d,t,r,m)=>m.row+1 },
@@ -78,72 +76,73 @@ $(document).ready(function () {
     });
 
     // Open Modal for Add
-// Open Modal for Add
-$('#btnAddCourse').on('click', function() {
-  // Populate dropdown dosen dari API 
-  $.ajax({
-    url: '/api/lecturer',
-    type: 'GET',
-    success: function (response) {
-      console.log('📘 Lecturer list:', response);
-      let data = Array.isArray(response) ? response : response.data;
+    $('#btnAddCourse').on('click', function() {
+      Swal.fire({
+        title: 'Memuat data dosen...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
 
-      if (!data || data.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Dosen Tidak Ditemukan',
-          text: 'Tidak ada data dosen yang tersedia. Silakan periksa kembali data dosen.',
-        });
-        return; // hentikan eksekusi berikutnya
-      }
+      $.ajax({
+        url: '/api/lecturer',
+        type: 'GET',
+        success: function (response) {
+          Swal.close();
+          console.log('📘 Lecturer list:', response);
+          let data = Array.isArray(response) ? response : response.data;
 
-      let lecturerMap = {};
-      data.forEach(item => {
-        if (item.lecturer_id && !lecturerMap[item.lecturer_id]) {
-          lecturerMap[item.lecturer_id] = item.lecturer_name || 'Belum Diisi';
+          if (!data || data.length === 0) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Dosen Tidak Ditemukan',
+              text: 'Tidak ada data dosen yang tersedia. Silakan periksa kembali data dosen.',
+            });
+            return;
+          }
+
+          let lecturerMap = {};
+          data.forEach(item => {
+            if (item.lecturer_id && !lecturerMap[item.lecturer_id]) {
+              lecturerMap[item.lecturer_id] = item.lecturer_name || 'Belum Diisi';
+            }
+          });
+
+          let uniqueLecturers = Object.entries(lecturerMap).map(([id, name]) => ({ id, name }));
+
+          $('#lecturerSupervise').empty().append('<option value="">Pilih Dosen Pengampu</option>');
+          uniqueLecturers.forEach(lecturer => {
+            $('#lecturerSupervise').append(`<option id="lecturer_id" value="${lecturer.id}">${lecturer.name}</option>`);
+          });
+
+          $('#courseForm')[0].reset();
+          $('#courseId').val('');
+          $('#courseModalLabel').text('Tambah Mata Kuliah');
+          $('#saveCourseBtn').text('Simpan');
+          $('#courseModal').modal('show');
+        },
+        error: function () {
+          Swal.close();
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal Memuat Dosen',
+            text: 'Terjadi kesalahan saat mengambil data dosen. Silakan coba lagi nanti.',
+          });
         }
       });
+    });
 
-      let uniqueLecturers = Object.entries(lecturerMap).map(([id, name]) => ({
-        id,
-        name
-      }));
-
-      // Kosongkan dropdown dulu
-      $('#lecturerSupervise').empty().append('<option value="">Pilih Dosen Pengampu</option>');
-
-      // Isi dropdown
-      uniqueLecturers.forEach(lecturer => {
-        $('#lecturerSupervise').append(
-          `<option id="lecturer_id" value="${lecturer.id}">${lecturer.name}</option>`
-        );
-      });
-
-      console.log('✅ Unique lecturers:', uniqueLecturers);
-
-      $('#courseForm')[0].reset();
-      $('#courseId').val('');
-      $('#courseModalLabel').text('Tambah Mata Kuliah');
-      $('#saveCourseBtn').text('Simpan');
-      $('#courseModal').modal('show');
-    },
-    error: function () {
-      console.error('Gagal memuat daftar dosen');
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Memuat Dosen',
-        text: 'Terjadi kesalahan saat mengambil data dosen. Silakan coba lagi nanti.',
-      });
-    }
-  });
-});
     // Save (Add or Edit)
     $('#courseForm').on('submit', function(e) {
         e.preventDefault();
-         console.log($('#lecturerSupervise').val());
         let id = $('#courseId').val();
         let method = id ? 'PUT' : 'POST';
         let url = id ? `/api/courses/${id}` : '/api/courses';
+
+        Swal.fire({
+          title: 'Menyimpan data...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
 
         $.ajax({
             url: url,
@@ -158,80 +157,81 @@ $('#btnAddCourse').on('click', function() {
                 _token: $('meta[name="csrf-token"]').attr('content')
             },
             success: function() {
+                Swal.close();
                 $('#courseModal').modal('hide');
                 Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success');
                 table.ajax.reload();
             },
             error: function() {
+                Swal.close();
                 Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
             }
         });
     });
 
-// Edit
-$(document).on('click', '.editBtn', function() {
-  let row = table.row($(this).parents('tr')).data();
-  console.log(row);
+    // Edit
+    $(document).on('click', '.editBtn', function() {
+      let row = table.row($(this).parents('tr')).data();
+      console.log(row);
 
-  // Load daftar dosen dulu
-  $.ajax({
-    url: '/api/lecturer',
-    type: 'GET',
-    success: function (response) {
-      let data = Array.isArray(response) ? response : response.data;
+      Swal.fire({
+        title: 'Memuat data dosen...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
 
-      if (!data || data.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Dosen Tidak Ditemukan',
-          text: 'Tidak ada data dosen yang tersedia. Silakan periksa kembali data dosen.',
-        });
-        return;
-      }
+      $.ajax({
+        url: '/api/lecturer',
+        type: 'GET',
+        success: function (response) {
+          Swal.close();
+          let data = Array.isArray(response) ? response : response.data;
 
-      // Mapping dosen
-      let lecturerMap = {};
-      data.forEach(item => {
-        if (item.lecturer_id && !lecturerMap[item.lecturer_id]) {
-          lecturerMap[item.lecturer_id] = item.lecturer_name || 'Belum Diisi';
+          if (!data || data.length === 0) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Dosen Tidak Ditemukan',
+              text: 'Tidak ada data dosen yang tersedia. Silakan periksa kembali data dosen.',
+            });
+            return;
+          }
+
+          let lecturerMap = {};
+          data.forEach(item => {
+            if (item.lecturer_id && !lecturerMap[item.lecturer_id]) {
+              lecturerMap[item.lecturer_id] = item.lecturer_name || 'Belum Diisi';
+            }
+          });
+
+          let uniqueLecturers = Object.entries(lecturerMap).map(([id, name]) => ({ id, name }));
+
+          $('#lecturerSupervise').empty().append('<option value="">Pilih Dosen Pengampu</option>');
+          uniqueLecturers.forEach(lecturer => {
+            $('#lecturerSupervise').append(`<option value="${lecturer.id}">${lecturer.name}</option>`);
+          });
+
+          $('#courseId').val(row.id);
+          $('#courseName').val(row.name);
+          $('#courseCode').val(row.code);
+          $('#courseSks').val(row.sks);
+          $('#courseCategory').val(row.category);
+          $('#courseDescription').val(row.description);
+          $('#lecturerSupervise').val(row.lecturer_id);
+
+          $('#courseModalLabel').text('Edit Mata Kuliah');
+          $('#saveCourseBtn').text('Update');
+          $('#courseModal').modal('show');
+        },
+        error: function() {
+          Swal.close();
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal Memuat Dosen',
+            text: 'Terjadi kesalahan saat mengambil data dosen. Silakan coba lagi nanti.',
+          });
         }
       });
-
-      let uniqueLecturers = Object.entries(lecturerMap).map(([id, name]) => ({ id, name }));
-
-      // Kosongkan dropdown dan isi ulang
-      $('#lecturerSupervise').empty().append('<option value="">Pilih Dosen Pengampu</option>');
-      uniqueLecturers.forEach(lecturer => {
-        $('#lecturerSupervise').append(
-          `<option value="${lecturer.id}">${lecturer.name}</option>`
-        );
-      });
-
-      // Isi field data course
-      $('#courseId').val(row.id);
-      $('#courseName').val(row.name);
-      $('#courseCode').val(row.code);
-      $('#courseSks').val(row.sks);
-      $('#courseCategory').val(row.category);
-      $('#courseDescription').val(row.description);
-
-      // Set lecturer dropdown ke dosen yang sesuai
-      $('#lecturerSupervise').val(row.lecturer_id);
-
-      $('#courseModalLabel').text('Edit Mata Kuliah');
-      $('#saveCourseBtn').text('Update');
-      $('#courseModal').modal('show');
-    },
-    error: function() {
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Memuat Dosen',
-        text: 'Terjadi kesalahan saat mengambil data dosen. Silakan coba lagi nanti.',
-      });
-    }
-  });
-});
-
+    });
 
     // Delete
     $(document).on('click', '.deleteBtn', function() {
@@ -245,15 +245,23 @@ $(document).on('click', '.editBtn', function() {
             cancelButtonText: 'Batal'
         }).then(result => {
             if (result.isConfirmed) {
+                Swal.fire({
+                  title: 'Menghapus data...',
+                  allowOutsideClick: false,
+                  didOpen: () => Swal.showLoading()
+                });
+
                 $.ajax({
                     url: `/api/courses/${id}`,
                     type: 'DELETE',
                     data: { _token: $('meta[name="csrf-token"]').attr('content') },
                     success: function() {
+                        Swal.close();
                         Swal.fire('Dihapus!', 'Data berhasil dihapus.', 'success');
                         table.ajax.reload();
                     },
                     error: function() {
+                        Swal.close();
                         Swal.fire('Gagal!', 'Gagal menghapus data.', 'error');
                     }
                 });
@@ -262,14 +270,14 @@ $(document).on('click', '.editBtn', function() {
     });
 
     // Dropdown onchange untuk dosen pengampu
-$('#lecturerSupervise').on('change', function() {
-  let selectedLecturerId = $(this).val();
-  let selectedLecturerName = $('#lecturerSupervise option:selected').text();
-  console.log('📘 Lecturer selected:', {
-    id: selectedLecturerId,
-    name: selectedLecturerName
-  });
-});
+    $('#lecturerSupervise').on('change', function() {
+      let selectedLecturerId = $(this).val();
+      let selectedLecturerName = $('#lecturerSupervise option:selected').text();
+      console.log('📘 Lecturer selected:', {
+        id: selectedLecturerId,
+        name: selectedLecturerName
+      });
+    });
 
 });
 </script>
