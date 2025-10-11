@@ -1,6 +1,6 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Jadwal Mengajar')
+@section('title', 'Jadwal Kuliah')
 
 @section('content')
 <div class="container mt-4">
@@ -17,13 +17,14 @@
       <table id="scheduleTable" class="table table-striped text-center align-middle">
         <thead>
           <tr>
-            <th style="width: 5%;">No</th>
-            <th style="width: 25%;">Mata Kuliah</th>
-            <th style="width: 10%;">Hari</th>
-            <th style="width: 15%;">Jam Mulai</th>
-            <th style="width: 15%;">Jam Selesai</th>
-            <th style="width: 15%;">Ruangan</th>
-            <th style="width: 15%;">Aksi</th>
+            <th class="text-center">No</th>
+            <th class="text-center">Mata Kuliah</th>
+            <th class="text-center">Dosen</th>
+            <th class="text-center">Hari</th>
+            <th class="text-center">Jam Mulai</th>
+            <th class="text-center">Jam Selesai</th>
+            <th class="text-center">Ruangan</th>
+            <th class="text-center">Aksi</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -43,6 +44,7 @@ $(document).ready(function () {
         columns: [
             { data: null, render: (d,t,r,m)=>m.row+1 },
             { data: 'course_name' },
+            { data: 'lecturer_name' },
             { data: 'day' },
             { data: 'start_time' },
             { data: 'end_time' },
@@ -67,24 +69,52 @@ $(document).ready(function () {
         ]
     });
 
+    // open modal add
     $('#btnAddSchedule').click(() => {
         $('#scheduleForm')[0].reset();
         $('#scheduleId').val('');
         $('#scheduleModalLabel').text('Tambah Jadwal');
         $('#saveScheduleBtn').text('Simpan');
-        $('#scheduleModal').modal('show');
+
+        Swal.fire({
+          title: 'Memuat Data...',
+          text: 'Harap tunggu.',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        Promise.all([
+          $.getJSON('/api/courses'),
+          $.getJSON('/api/lecturer')
+        ]).then(([courses, lecturers]) => {
+            Swal.close();
+
+            $('#courseSelect').empty().append('<option value="">Pilih Mata Kuliah</option>');
+            courses.data.forEach(c => $('#courseSelect').append(`<option value="${c.id}">${c.name}</option>`));
+
+            $('#lecturerSelect').empty().append('<option value="">Pilih Dosen</option>');
+            lecturers.data.forEach(l => $('#lecturerSelect').append(`<option value="${l.lecturer_id}">${l.lecturer_name}</option>`));
+
+            $('#scheduleModal').modal('show');
+        }).catch(() => {
+            Swal.fire('Gagal!', 'Tidak bisa memuat data dosen atau mata kuliah.', 'error');
+        });
     });
 
+    // submit form
     $('#scheduleForm').submit(function(e){
         e.preventDefault();
         let id = $('#scheduleId').val();
         let method = id ? 'PUT' : 'POST';
         let url = id ? `/api/schedule/${id}` : '/api/schedule';
 
+        Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
         $.ajax({
             url, type: method,
             data: {
-                course_name: $('#courseName').val(),
+                course_id: $('#courseSelect').val(),
+                lecturer_id: $('#lecturerSelect').val(),
                 day: $('#day').val(),
                 start_time: $('#startTime').val(),
                 end_time: $('#endTime').val(),
@@ -92,29 +122,56 @@ $(document).ready(function () {
                 _token: $('meta[name="csrf-token"]').attr('content')
             },
             success: function(){
+                Swal.close();
                 $('#scheduleModal').modal('hide');
-                Swal.fire('Berhasil!', 'Data disimpan.', 'success');
+                Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success');
                 table.ajax.reload();
             },
             error: function(){
-                Swal.fire('Gagal!', 'Terjadi kesalahan.', 'error');
+                Swal.close();
+                Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
             }
         });
     });
 
+    // edit
     $(document).on('click', '.editBtn', function() {
         let row = table.row($(this).parents('tr')).data();
         $('#scheduleId').val(row.id);
-        $('#courseName').val(row.course_name);
         $('#day').val(row.day);
         $('#startTime').val(row.start_time);
         $('#endTime').val(row.end_time);
         $('#room').val(row.room);
-        $('#scheduleModalLabel').text('Edit Jadwal');
-        $('#saveScheduleBtn').text('Update');
-        $('#scheduleModal').modal('show');
+
+        Swal.fire({
+          title: 'Memuat Data...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        Promise.all([
+          $.getJSON('/api/courses'),
+          $.getJSON('/api/lecturer')
+        ]).then(([courses, lecturers]) => {
+            Swal.close();
+
+            $('#courseSelect').empty().append('<option value="">Pilih Mata Kuliah</option>');
+            courses.data.forEach(c => {
+                $('#courseSelect').append(`<option value="${c.id}" ${c.id===row.course_id?'selected':''}>${c.name}</option>`);
+            });
+
+            $('#lecturerSelect').empty().append('<option value="">Pilih Dosen</option>');
+            lecturers.data.forEach(l => {
+                $('#lecturerSelect').append(`<option value="${l.lecturer_id}" ${l.lecturer_id===row.lecturer_id?'selected':''}>${l.lecturer_name}</option>`);
+            });
+
+            $('#scheduleModalLabel').text('Edit Jadwal');
+            $('#saveScheduleBtn').text('Update');
+            $('#scheduleModal').modal('show');
+        });
     });
 
+    // delete
     $(document).on('click', '.deleteBtn', function() {
         let id = $(this).data('id');
         Swal.fire({
@@ -126,15 +183,18 @@ $(document).ready(function () {
             cancelButtonText: 'Batal'
         }).then(result => {
             if (result.isConfirmed) {
+                Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 $.ajax({
                     url: `/api/schedule/${id}`,
                     type: 'DELETE',
                     data: { _token: $('meta[name="csrf-token"]').attr('content') },
                     success: function(){
+                        Swal.close();
                         Swal.fire('Dihapus!', 'Data berhasil dihapus.', 'success');
                         table.ajax.reload();
                     },
                     error: function(){
+                        Swal.close();
                         Swal.fire('Gagal!', 'Gagal menghapus data.', 'error');
                     }
                 });

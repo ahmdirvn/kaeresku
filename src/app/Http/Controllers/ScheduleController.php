@@ -25,11 +25,10 @@ class ScheduleController extends Controller
                 throw new \Exception('Token tidak ditemukan');
             }
             $verifiedIdToken = $firebaseAuth->verifyIdToken($token);
-            $this->uid = $verifiedIdToken->claims()->get('sub'); // UID Firebase
+            $this->uid = $verifiedIdToken->claims()->get('sub');
         } catch (\Throwable $e) {
             $this->uid = null;
         }
-
 
         if (!$this->uid) {
             redirect()->route('login')->send();
@@ -47,12 +46,33 @@ class ScheduleController extends Controller
         $uid = $this->getUid();
 
         $schedules = $this->database->getReference($this->table)->getValue();
+        $courses   = $this->database->getReference('courses')->getValue();
+        $lecturers = $this->database->getReference('lecturers')->getValue();
+
         $result = [];
 
         if ($schedules) {
             foreach ($schedules as $id => $schedule) {
                 if (($schedule['user_id'] ?? null) === $uid) {
-                    $result[$id] = $schedule;
+
+                    $courseName = '';
+                    $lecturerName = '';
+
+                    // Ambil nama course
+                    if (!empty($schedule['course_id']) && isset($courses[$schedule['course_id']])) {
+                        $courseName = $courses[$schedule['course_id']]['name'] ?? '';
+                    }
+
+                    // Ambil nama dosen
+                    if (!empty($schedule['lecturer_id']) && isset($lecturers[$schedule['lecturer_id']])) {
+                        $lecturerName = $lecturers[$schedule['lecturer_id']]['lecturer_name'] ?? '';
+                    }
+
+                    $schedule['id'] = $id;
+                    $schedule['course_name'] = $courseName;
+                    $schedule['lecturer_name'] = $lecturerName;
+
+                    $result[] = $schedule;
                 }
             }
         }
@@ -60,23 +80,29 @@ class ScheduleController extends Controller
         return view('schedules.index', compact('result'));
     }
 
-    // READ ALL (API)
+    // API - GET ALL
     public function index()
     {
         $uid = $this->getUid();
         $schedules = $this->database->getReference($this->table)->getValue();
+        $courses   = $this->database->getReference('courses')->getValue();
+        $lecturers = $this->database->getReference('lecturers')->getValue();
 
         $result = [];
+
         if ($schedules) {
             foreach ($schedules as $id => $schedule) {
                 if (($schedule['user_id'] ?? null) === $uid) {
                     $result[] = [
-                        'id'          => $id,
-                        'course_name' => $schedule['course_name'] ?? '',
-                        'day'         => $schedule['day'] ?? '',
-                        'start_time'  => $schedule['start_time'] ?? '',
-                        'end_time'    => $schedule['end_time'] ?? '',
-                        'room'        => $schedule['room'] ?? '',
+                        'id'            => $id,
+                        'course_id'     => $schedule['course_id'] ?? '',
+                        'course_name'   => $courses[$schedule['course_id']]['name'] ?? '-',
+                        'lecturer_id'   => $schedule['lecturer_id'] ?? '',
+                        'lecturer_name' => $lecturers[$schedule['lecturer_id']]['lecturer_name'] ?? '-',
+                        'day'           => $schedule['day'] ?? '',
+                        'start_time'    => $schedule['start_time'] ?? '',
+                        'end_time'      => $schedule['end_time'] ?? '',
+                        'room'          => $schedule['room'] ?? '',
                     ];
                 }
             }
@@ -93,7 +119,8 @@ class ScheduleController extends Controller
         $newSchedule = $this->database
             ->getReference($this->table)
             ->push([
-                'course_name' => $request->course_name,
+                'course_id'   => $request->course_id,
+                'lecturer_id' => $request->lecturer_id,
                 'day'         => $request->day,
                 'start_time'  => $request->start_time,
                 'end_time'    => $request->end_time,
@@ -115,7 +142,8 @@ class ScheduleController extends Controller
         }
 
         $this->database->getReference($this->table . '/' . $id)->update([
-            'course_name' => $request->course_name,
+            'course_id'   => $request->course_id,
+            'lecturer_id' => $request->lecturer_id,
             'day'         => $request->day,
             'start_time'  => $request->start_time,
             'end_time'    => $request->end_time,

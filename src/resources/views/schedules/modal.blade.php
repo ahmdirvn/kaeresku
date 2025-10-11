@@ -12,12 +12,17 @@
           <input type="hidden" id="scheduleId">
 
           <div class="mb-3">
-            <label for="courseName" class="form-label">Nama Mata Kuliah</label>
-            <input type="text" id="courseName" class="form-control" required>
+            <label class="form-label">Mata Kuliah</label>
+            <select id="courseSelect" class="form-control" required></select>
           </div>
 
           <div class="mb-3">
-            <label for="day" class="form-label">Hari</label>
+            <label class="form-label">Dosen Pengampu</label>
+            <select id="lecturerSelect" class="form-control" required></select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Hari</label>
             <select id="day" class="form-control" required>
               <option value="">Pilih Hari</option>
               <option>Senin</option>
@@ -31,17 +36,17 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="startTime" class="form-label">Jam Mulai</label>
+              <label class="form-label">Jam Mulai</label>
               <input type="time" id="startTime" class="form-control" required>
             </div>
             <div class="col-md-6 mb-3">
-              <label for="endTime" class="form-label">Jam Selesai</label>
+              <label class="form-label">Jam Selesai</label>
               <input type="time" id="endTime" class="form-control" required>
             </div>
           </div>
 
           <div class="mb-3">
-            <label for="room" class="form-label">Ruangan</label>
+            <label class="form-label">Ruangan</label>
             <input type="text" id="room" class="form-control" placeholder="Misal: Lab 201" required>
           </div>
         </div>
