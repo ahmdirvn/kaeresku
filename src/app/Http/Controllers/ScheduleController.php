@@ -44,7 +44,6 @@ class ScheduleController extends Controller
     public function view()
     {
         $uid = $this->getUid();
-
         $schedules = $this->database->getReference($this->table)->getValue();
         $courses   = $this->database->getReference('courses')->getValue();
         $lecturers = $this->database->getReference('lecturers')->getValue();
@@ -53,20 +52,11 @@ class ScheduleController extends Controller
 
         if ($schedules) {
             foreach ($schedules as $id => $schedule) {
+                // Filter berdasarkan user login
                 if (($schedule['user_id'] ?? null) === $uid) {
 
-                    $courseName = '';
-                    $lecturerName = '';
-
-                    // Ambil nama course
-                    if (!empty($schedule['course_id']) && isset($courses[$schedule['course_id']])) {
-                        $courseName = $courses[$schedule['course_id']]['name'] ?? '';
-                    }
-
-                    // Ambil nama dosen
-                    if (!empty($schedule['lecturer_id']) && isset($lecturers[$schedule['lecturer_id']])) {
-                        $lecturerName = $lecturers[$schedule['lecturer_id']]['lecturer_name'] ?? '';
-                    }
+                    $courseName = $courses[$schedule['course_id']]['name'] ?? '-';
+                    $lecturerName = $lecturers[$schedule['lecturer_id']]['lecturer_name'] ?? '-';
 
                     $schedule['id'] = $id;
                     $schedule['course_name'] = $courseName;
@@ -128,7 +118,11 @@ class ScheduleController extends Controller
                 'user_id'     => $uid,
             ]);
 
-        return response()->json(['status' => 'success', 'id' => $newSchedule->getKey()]);
+        return response()->json([
+            'status' => 'success',
+            'id'     => $newSchedule->getKey(),
+            'data'   => $newSchedule->getValue()
+        ]);
     }
 
     // UPDATE
@@ -141,14 +135,15 @@ class ScheduleController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
-        $this->database->getReference($this->table . '/' . $id)->update([
-            'course_id'   => $request->course_id,
-            'lecturer_id' => $request->lecturer_id,
-            'day'         => $request->day,
-            'start_time'  => $request->start_time,
-            'end_time'    => $request->end_time,
-            'room'        => $request->room,
-        ]);
+        $this->database->getReference($this->table . '/' . $id)
+            ->update([
+                'course_id'   => $request->course_id,
+                'lecturer_id' => $request->lecturer_id,
+                'day'         => $request->day,
+                'start_time'  => $request->start_time,
+                'end_time'    => $request->end_time,
+                'room'        => $request->room,
+            ]);
 
         return response()->json(['status' => 'updated']);
     }
