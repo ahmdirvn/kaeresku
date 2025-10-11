@@ -9,9 +9,10 @@ use Kreait\Firebase\Contract\Auth as FirebaseAuth;
 class KrsController extends Controller
 {
     protected $database;
-    protected $table = 'courses';
-    public $uid;
+    protected $tableCourses = 'courses';
+    protected $tableKrs = 'krs';
     protected $firebaseAuth;
+    protected $uid;
 
     public function __construct(FirebaseAuth $firebaseAuth)
     {
@@ -29,7 +30,6 @@ class KrsController extends Controller
             $this->uid = null;
         }
 
-
         if (!$this->uid) {
             redirect()->route('login')->send();
         }
@@ -44,23 +44,22 @@ class KrsController extends Controller
     public function view()
     {
         $uid = $this->getUid();
-        $data = $this->database->getReference($this->table)->getValue();
+        $courses = $this->database->getReference($this->tableCourses)->getValue();
         $result = [];
 
-        if ($data) {
-            foreach ($data as $id => $krs) {
-                if (($krs['user_id'] ?? null) === $uid) {
+        if ($courses) {
+            foreach ($courses as $id => $course) {
+                if (($course['user_id'] ?? null) === $uid) {
                     $result[] = [
                         'id' => $id,
-                        'name' => $krs['name'] ?? '',
-                        'sks' => $krs['sks'] ?? 0,
-                        'description' => $krs['description'] ?? ''
+                        'name' => $course['name'] ?? '',
+                        'sks' => $course['sks'] ?? 0,
+                        'description' => $course['description'] ?? '',
                     ];
                 }
             }
         }
 
-        // return response()->json(['data' => $result]);
         return view('krs.view', compact('result'));
     }
 
@@ -68,78 +67,26 @@ class KrsController extends Controller
     public function index()
     {
         $uid = $this->getUid();
-        $data = $this->database->getReference($this->table)->getValue();
-        $result = [];
-
-        if ($data) {
-            foreach ($data as $id => $krs) {
-                if (($krs['user_id'] ?? null) === $uid) {
-                    $result[] = [
-                        'id' => $id,
-                        'semester' => $krs['semester'] ?? '',
-                        'max_sks' => $krs['max_sks'] ?? 0,
-                        'description' => $krs['description'] ?? '',
-                        'courses' => $krs['courses'] ?? []
-                    ];
-                }
-            }
-        }
-
-        return response()->json(['data' => $result]);
+        $data = $this->database->getReference($this->tableKrs . '/' . $uid)->getValue() ?? [];
+        return response()->json(['data' => $data]);
     }
 
-    // === CREATE semester ===
+    // === SAVE all semesters + courses ===
     public function store(Request $request)
     {
         $uid = $this->getUid();
+        $payload = $request->all();
 
-        $new = $this->database->getReference($this->table)->push([
-            'semester' => $request->semester ?? $request->name,
-            'max_sks' => (int) $request->max_sks,
-            'description' => $request->description ?? '',
-            'courses' => [],
-            'user_id' => $uid,
-        ]);
+        $this->database->getReference($this->tableKrs . '/' . $uid)->set($payload);
 
-        return response()->json([
-            'status' => 'success',
-            'id' => $new->getKey(),
-            'data' => $new->getValue()
-        ]);
+        return response()->json(['status' => 'success', 'message' => 'KRS saved successfully']);
     }
 
-    // === UPDATE semester (nama / courses / sks) ===
-    public function update(Request $request, $id)
+    // === DELETE all (reset user KRS) ===
+    public function destroy()
     {
         $uid = $this->getUid();
-        $krs = $this->database->getReference($this->table . '/' . $id)->getValue();
-
-        if (!$krs || ($krs['user_id'] ?? null) !== $uid) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
-        }
-
-        $data = [];
-        if ($request->has('semester')) $data['semester'] = $request->semester;
-        if ($request->has('max_sks')) $data['max_sks'] = (int) $request->max_sks;
-        if ($request->has('description')) $data['description'] = $request->description;
-        if ($request->has('courses')) $data['courses'] = $request->courses;
-
-        $this->database->getReference($this->table . '/' . $id)->update($data);
-
-        return response()->json(['status' => 'updated']);
-    }
-
-    // === DELETE semester ===
-    public function destroy($id)
-    {
-        $uid = $this->getUid();
-        $krs = $this->database->getReference($this->table . '/' . $id)->getValue();
-
-        if (!$krs || ($krs['user_id'] ?? null) !== $uid) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
-        }
-
-        $this->database->getReference($this->table . '/' . $id)->remove();
+        $this->database->getReference($this->tableKrs . '/' . $uid)->remove();
         return response()->json(['status' => 'deleted']);
     }
 }
