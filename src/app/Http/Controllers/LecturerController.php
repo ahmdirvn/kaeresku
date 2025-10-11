@@ -28,7 +28,6 @@ class LecturerController extends Controller
             $this->uid = null;
         }
 
-
         if (!$this->uid) {
             redirect()->route('login')->send();
         }
@@ -59,6 +58,7 @@ class LecturerController extends Controller
                     'lecturer_id'   => $lecturer['lecturer_id'] ?? '',
                     'lecturer_name' => $lecturer['lecturer_name'] ?? '',
                     'lecturer_code' => $lecturer['lecturer_code'] ?? '',
+                    'lecturer_phone' => $lecturer['lecturer_phone'] ?? '',
                     'description'   => $lecturer['description'] ?? '',
                 ];
             }
@@ -72,9 +72,23 @@ class LecturerController extends Controller
     {
         $uid = $this->getUid();
 
+        // Validasi duplikasi kode dosen (case-insensitive)
+        $lecturers = $this->database->getReference($this->table)->getValue() ?? [];
+        foreach ($lecturers as $key => $lecturer) {
+            if (($lecturer['user_id'] ?? null) === $uid &&
+                strtolower($lecturer['lecturer_code'] ?? '') === strtolower($request->lecturer_code)
+            ) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Kode dosen sudah digunakan.'
+                ], 409);
+            }
+        }
+
         $newLecturer = $this->database->getReference($this->table)->push([
             'lecturer_name' => $request->lecturer_name,
             'lecturer_code' => $request->lecturer_code,
+            'lecturer_phone' => $request->lecturer_phone ?? '',
             'description'   => $request->lecturer_description ?? '',
             'user_id'       => $uid,
         ]);
@@ -96,9 +110,24 @@ class LecturerController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
+        // Validasi duplikasi kode dosen pada update (cek semua kecuali record yg sedang diupdate)
+        $lecturers = $this->database->getReference($this->table)->getValue() ?? [];
+        foreach ($lecturers as $key => $l) {
+            if ($key === $id) continue; // lewati diri sendiri
+            if (($l['user_id'] ?? null) === $uid &&
+                strtolower($l['lecturer_code'] ?? '') === strtolower($request->lecturer_code)
+            ) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Kode dosen sudah digunakan.'
+                ], 409);
+            }
+        }
+
         $this->database->getReference($this->table . '/' . $id)->update([
             'lecturer_name' => $request->lecturer_name,
             'lecturer_code' => $request->lecturer_code,
+            'lecturer_phone' => $request->lecturer_phone ?? '',
             'description'   => $request->lecturer_description ?? '',
         ]);
 

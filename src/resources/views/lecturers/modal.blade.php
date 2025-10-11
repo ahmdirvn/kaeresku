@@ -10,7 +10,6 @@
         @csrf
         <div class="modal-body">
           <input type="hidden" id="lecturerIdHidden">
-          <input type="hidden" id="lecturerId" name="lecturer_id">
 
           <div class="col-md-12 mb-3">
             <label for="lecturerName" class="form-label fw-semibold">Nama Dosen</label>
@@ -23,8 +22,13 @@
           </div>
 
           <div class="col-md-12 mb-3">
+            <label for="lecturerPhone" class="form-label fw-semibold">Nomor HP <span class="text-muted">(Opsional)</span></label>
+            <input type="text" id="lecturerPhone" class="form-control" placeholder="Contoh: 081234567890">
+          </div>
+
+          <div class="col-md-12 mb-3">
             <label for="lecturerDescription" class="form-label fw-semibold">Deskripsi (Opsional)</label>
-            <textarea id="lecturerDescription" class="form-control" rows="2" placeholder="Bisa diisi no telepon atau keterangan lainnya"></textarea>
+            <textarea id="lecturerDescription" class="form-control" rows="2" placeholder="Keterangan tambahan seperti bidang atau catatan lainnya"></textarea>
           </div>
         </div>
 

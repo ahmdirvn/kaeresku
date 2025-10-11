@@ -19,6 +19,7 @@
             <th class="text-center">No</th>
             <th class="text-center">Nama</th>
             <th class="text-center">Kode</th>
+            <th class="text-center">No. HP</th>
             <th class="text-center">Deskripsi</th>
             <th class="text-center">Aksi</th>
           </tr>
@@ -41,6 +42,7 @@ $(document).ready(function () {
             { data: null, render: (d,t,r,m)=>m.row+1 },
             { data: 'lecturer_name' },
             { data: 'lecturer_code' },
+            { data: 'lecturer_phone' },
             { data: 'description' },
             {
                 data: 'id',
@@ -62,13 +64,24 @@ $(document).ready(function () {
         ]
     });
 
-    // === ADD ===
+    // === ADD (buka modal) ===
     $('#btnAddLecturer').on('click', function() {
-        $('#lecturerForm')[0].reset();
-        $('#lecturerIdHidden').val('');
-        $('#lecturerModalLabel').text('Tambah Dosen');
-        $('#saveLecturerBtn').text('Simpan');
-        $('#lecturerModal').modal('show');
+        // loader singkat saat open modal (UX)
+        Swal.fire({
+          title: 'Menyiapkan form...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        // karena tidak ada fetch, tutup loader segera dan tampilkan modal
+        setTimeout(() => {
+          Swal.close();
+          $('#lecturerForm')[0].reset();
+          $('#lecturerIdHidden').val('');
+          $('#lecturerModalLabel').text('Tambah Dosen');
+          $('#saveLecturerBtn').text('Simpan');
+          $('#lecturerModal').modal('show');
+        }, 150); // 150ms agar loader kelihatan sebentar (opsional)
     });
 
     // === SAVE / UPDATE ===
@@ -78,38 +91,65 @@ $(document).ready(function () {
         let method = id ? 'PUT' : 'POST';
         let url = id ? `/api/lecturer/${id}` : '/api/lecturer';
 
+        // tampilkan loader saat submit
+        Swal.fire({
+          title: id ? 'Memperbarui data...' : 'Menyimpan data...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
         $.ajax({
             url: url,
             type: method,
             data: {
                 lecturer_name: $('#lecturerName').val(),
                 lecturer_code: $('#lecturerCode').val(),
+                lecturer_phone: $('#lecturerPhone').val(),
                 lecturer_description: $('#lecturerDescription').val(),
                 _token: $('meta[name="csrf-token"]').attr('content')
             },
             success: function() {
+                Swal.close();
                 $('#lecturerModal').modal('hide');
                 Swal.fire('Berhasil!', 'Data dosen berhasil disimpan.', 'success');
                 table.ajax.reload();
             },
-            error: function() {
-                Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
+            error: function(xhr) {
+                Swal.close();
+                if (xhr.status === 409) {
+                    Swal.fire('Gagal!', 'Kode dosen sudah digunakan.', 'warning');
+                } else {
+                    Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
+                }
             }
         });
     });
 
-    // === EDIT ===
+    // === EDIT (buka modal & isi) ===
     $(document).on('click', '.editBtn', function() {
         let row = table.row($(this).parents('tr')).data();
-        $('#lecturerIdHidden').val(row.id);
-        $('#lecturerId').val(row.lecturer_id);
-        $('#lecturerName').val(row.lecturer_name);
-        $('#lecturerCode').val(row.lecturer_code);
-        $('#lecturerDescription').val(row.description);
 
-        $('#lecturerModalLabel').text('Edit Dosen');
-        $('#saveLecturerBtn').text('Update');
-        $('#lecturerModal').modal('show');
+        // tampilkan loader saat menyiapkan data edit
+        Swal.fire({
+          title: 'Memuat data dosen...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        // karena data sudah ada di table row, kita tutup loader lalu tampilkan modal
+        setTimeout(() => {
+          Swal.close();
+
+          $('#lecturerIdHidden').val(row.id);
+          $('#lecturerName').val(row.lecturer_name);
+          $('#lecturerCode').val(row.lecturer_code);
+          $('#lecturerPhone').val(row.lecturer_phone);
+          $('#lecturerDescription').val(row.description);
+
+          $('#lecturerModalLabel').text('Edit Dosen');
+          $('#saveLecturerBtn').text('Update');
+          $('#lecturerModal').modal('show');
+        }, 150);
     });
 
     // === DELETE ===
@@ -124,15 +164,24 @@ $(document).ready(function () {
             cancelButtonText: 'Batal'
         }).then(result => {
             if (result.isConfirmed) {
+                // tampilkan loader saat proses delete
+                Swal.fire({
+                  title: 'Menghapus data...',
+                  allowOutsideClick: false,
+                  didOpen: () => Swal.showLoading()
+                });
+
                 $.ajax({
                     url: `/api/lecturer/${id}`,
                     type: 'DELETE',
                     data: { _token: $('meta[name="csrf-token"]').attr('content') },
                     success: function() {
+                        Swal.close();
                         Swal.fire('Dihapus!', 'Data berhasil dihapus.', 'success');
                         table.ajax.reload();
                     },
                     error: function() {
+                        Swal.close();
                         Swal.fire('Gagal!', 'Gagal menghapus data.', 'error');
                     }
                 });
