@@ -21,18 +21,14 @@ class KrsController extends Controller
 
         try {
             $token = session('firebase_token');
-            if (!$token) {
-                throw new \Exception('Token tidak ditemukan');
-            }
-            $verifiedIdToken = $firebaseAuth->verifyIdToken($token);
-            $this->uid = $verifiedIdToken->claims()->get('sub');
+            if (!$token) throw new \Exception('Token tidak ditemukan');
+            $verified = $firebaseAuth->verifyIdToken($token);
+            $this->uid = $verified->claims()->get('sub');
         } catch (\Throwable $e) {
             $this->uid = null;
         }
 
-        if (!$this->uid) {
-            redirect()->route('login')->send();
-        }
+        if (!$this->uid) redirect()->route('login')->send();
     }
 
     protected function getUid()
@@ -40,7 +36,7 @@ class KrsController extends Controller
         return $this->uid;
     }
 
-    // === VIEW ===
+    // === VIEW PAGE ===
     public function view()
     {
         $uid = $this->getUid();
@@ -63,30 +59,30 @@ class KrsController extends Controller
         return view('krs.view', compact('result'));
     }
 
-    // === GET all KRS (per user) ===
+    // === GET USER KRS ===
     public function index()
     {
         $uid = $this->getUid();
-        $data = $this->database->getReference($this->tableKrs . '/' . $uid)->getValue() ?? [];
+        $data = $this->database->getReference("{$this->tableKrs}/{$uid}")->getValue() ?? [];
         return response()->json(['data' => $data]);
     }
 
-    // === SAVE all semesters + courses ===
+    // === SAVE USER KRS ===
     public function store(Request $request)
     {
         $uid = $this->getUid();
         $payload = $request->all();
 
-        $this->database->getReference($this->tableKrs . '/' . $uid)->set($payload);
+        $this->database->getReference("{$this->tableKrs}/{$uid}")->set($payload);
 
         return response()->json(['status' => 'success', 'message' => 'KRS saved successfully']);
     }
 
-    // === DELETE all (reset user KRS) ===
+    // === RESET USER KRS ===
     public function destroy()
     {
         $uid = $this->getUid();
-        $this->database->getReference($this->tableKrs . '/' . $uid)->remove();
+        $this->database->getReference("{$this->tableKrs}/{$uid}")->remove();
         return response()->json(['status' => 'deleted']);
     }
 }
