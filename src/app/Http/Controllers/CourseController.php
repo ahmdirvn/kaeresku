@@ -29,6 +29,12 @@ class CourseController extends Controller
         } catch (\Throwable $e) {
             $this->uid = null;
         }
+
+
+
+        if (!$this->uid) {
+            redirect()->route('login')->send();
+        }
     }
 
     protected function getUid()
@@ -43,14 +49,38 @@ class CourseController extends Controller
 
         $courses = $this->database->getReference($this->table)->getValue();
 
+        // Ambil semua data lecturer
+        $lecturers = $this->database->getReference('lecturers')->getValue();
+
         $result = [];
+
+
         if ($courses) {
             foreach ($courses as $id => $course) {
-                if (($course['user_id'] ?? null) === $uid) { // filter data user login
+                // Filter berdasarkan user login
+                if (($course['user_id'] ?? null) === $uid) {
+
+                    // Ambil lecturer_id dari course
+                    $lecturerId = $course['lecturer_id'] ?? null;
+
+                    // Cek apakah lecturer_id ada di data lecturer
+                    if ($lecturerId && isset($lecturers[$lecturerId])) {
+                        $course['id'] = $id;
+                        $course['lecturer_name'] = $lecturers[$lecturerId]['lecturer_name'] ?? 'Belum Diisi';
+                        $course['lecturer_id'] = $lecturerId;
+                    } else {
+                        $course['id'] = $id;
+                        $course['lecturer_name'] = 'Belum Diisi';
+                    }
+
+                    // Masukkan ke result
                     $result[$id] = $course;
                 }
             }
         }
+
+
+        // return response()->json(['data' => array_values($result)]);
 
         return view('courses.index', compact('result'));
     }
@@ -68,7 +98,8 @@ class CourseController extends Controller
                 'sks'         => $request->sks,
                 'description' => $request->description ?? '',
                 'category'    => $request->category ?? '',
-                'user_id'     => $uid, // simpan id user
+                'user_id'     => $uid,
+                'lecturer_id'  => $request->lecturerId ?? '',
             ]);
 
         return response()->json([
@@ -84,23 +115,38 @@ class CourseController extends Controller
         $uid = $this->getUid();
         $courses = $this->database->getReference($this->table)->getValue();
 
+        // Ambil semua data lecturer
+        $lecturers = $this->database->getReference('lecturers')->getValue();
+
         $result = [];
+
+
         if ($courses) {
             foreach ($courses as $id => $course) {
-                if (($course['user_id'] ?? null) === $uid) { // filter berdasarkan user_id
-                    $result[] = [
-                        'id'          => $id,
-                        'name'        => $course['name'] ?? '',
-                        'code'        => $course['code'] ?? '',
-                        'sks'         => $course['sks'] ?? 0,
-                        'description' => $course['description'] ?? '',
-                        'category'    => $course['category'] ?? '',
-                    ];
+                // Filter berdasarkan user login
+                if (($course['user_id'] ?? null) === $uid) {
+
+                    // Ambil lecturer_id dari course
+                    $lecturerId = $course['lecturer_id'] ?? null;
+
+                    // Cek apakah lecturer_id ada di data lecturer
+                    if ($lecturerId && isset($lecturers[$lecturerId])) {
+                        $course['id'] = $id;
+                        $course['lecturer_name'] = $lecturers[$lecturerId]['lecturer_name'] ?? 'Belum Diisi';
+                        $course['lecturer_id'] = $lecturerId;
+                    } else {
+                        $course['id'] = $id;
+                        $course['lecturer_name'] = 'Belum Diisi';
+                    }
+
+                    // Masukkan ke result
+                    $result[$id] = $course;
                 }
             }
         }
 
-        return response()->json(['data' => $result]);
+
+        return response()->json(['data' => array_values($result)]);
     }
 
     // UPDATE (hanya boleh update data milik user)
@@ -120,6 +166,8 @@ class CourseController extends Controller
                 'sks'         => $request->sks,
                 'description' => $request->description ?? '',
                 'category'    => $request->category ?? '',
+                'lecturer_id'  => $request->lecturerId ?? '',
+
             ]);
 
         return response()->json(['status' => 'updated']);

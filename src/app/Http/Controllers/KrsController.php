@@ -28,6 +28,11 @@ class KrsController extends Controller
         } catch (\Throwable $e) {
             $this->uid = null;
         }
+
+
+        if (!$this->uid) {
+            redirect()->route('login')->send();
+        }
     }
 
     protected function getUid()

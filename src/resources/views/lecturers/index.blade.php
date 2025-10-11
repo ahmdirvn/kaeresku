@@ -16,11 +16,11 @@
       <table id="lecturerTable" class="table table-striped text-center align-middle" style="width:100%">
         <thead>
           <tr>
-            <th>No</th>
-            <th>Nama</th>
-            <th>Kode</th>
-            <th>Deskripsi</th>
-            <th>Aksi</th>
+            <th class="text-center">No</th>
+            <th class="text-center">Nama</th>
+            <th class="text-center">Kode</th>
+            <th class="text-center">Deskripsi</th>
+            <th class="text-center">Aksi</th>
           </tr>
         </thead>
         <tbody class="table-border-bottom-0"></tbody>
