@@ -45,6 +45,9 @@ use App\Http\Controllers\form_elements\BasicInput;
 use App\Http\Controllers\form_elements\InputGroups;
 use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
+use App\Http\Controllers\KrsController;
+use App\Http\Controllers\LecturerController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\WelcomeController;
 use GPBMetadata\Google\Api\Auth;
@@ -175,6 +178,41 @@ Route::prefix('api/courses')->group(function () {
     Route::post('/', [CourseController::class, 'store']);
     Route::put('/{id}', [CourseController::class, 'update']);
     Route::delete('/{id}', [CourseController::class, 'destroy']);
+});
+
+// krs view 
+Route::get('/krs-view', [KrsController::class, 'view'])->name('krs-view');
+
+Route::get('krs', [krsController::class, 'view']);
+Route::prefix('api/krs')->group(function () {
+    Route::get('/', [krsController::class, 'index']);
+    Route::post('/', [krsController::class, 'store']);
+    Route::put('/{id}', [krsController::class, 'update']);
+    Route::delete('/{id}', [krsController::class, 'destroy']);
+});
+
+
+// lecturer view 
+Route::get('/lecturer-view', [LecturerController::class, 'view'])->name('lecturer-view');
+
+Route::get('lecturer', [LecturerController::class, 'view']);
+Route::prefix('api/lecturer')->group(function () {
+    Route::get('/', [LecturerController::class, 'index']);
+    Route::post('/', [LecturerController::class, 'store']);
+    Route::put('/{id}', [LecturerController::class, 'update']);
+    Route::delete('/{id}', [LecturerController::class, 'destroy']);
+});
+
+
+// lecturer view 
+Route::get('/schedule-view', [ScheduleController::class, 'view'])->name('schedule-view');
+
+Route::get('schedule', [ScheduleController::class, 'view']);
+Route::prefix('api/schedule')->group(function () {
+    Route::get('/', [ScheduleController::class, 'index']);
+    Route::post('/', [ScheduleController::class, 'store']);
+    Route::put('/{id}', [ScheduleController::class, 'update']);
+    Route::delete('/{id}', [ScheduleController::class, 'destroy']);
 });
 
 
