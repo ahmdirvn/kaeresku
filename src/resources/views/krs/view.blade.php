@@ -36,7 +36,7 @@
       </div>
     </div>
 
-    <div id="semester-container" class="d-flex flex-nowrap gap-3 pb-3"></div>
+    <div id="semester-container" class="d-flex flex-wrap gap-3 pb-3"></div>
   </div>
 </div>
 @endsection
